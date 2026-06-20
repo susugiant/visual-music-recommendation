@@ -339,3 +339,20 @@ audio {
     height: 240px;
   }
 }
+.error-state {
+  margin-top: 24px;
+  padding: 28px;
+  border-radius: 28px;
+  background: #fff0ed;
+  color: #8f2f1d;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(40, 30, 20, 0.08);
+}
+
+.error-state h2 {
+  margin-bottom: 8px;
+}
+
+.error-state p {
+  margin-bottom: 0;
+}

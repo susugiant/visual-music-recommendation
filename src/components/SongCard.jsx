@@ -1,6 +1,6 @@
-function SongCard({ song }) {
-  const matchPercent = Math.round(song.match_accuracy * 100);
+import { formatMatchAccuracy } from "../utils/formatters";
 
+function SongCard({ song }) {
   return (
     <article className="song-card">
       <img
@@ -18,7 +18,7 @@ function SongCard({ song }) {
 
         <div className="match-box">
           <span>Match Accuracy</span>
-          <strong>{matchPercent}%</strong>
+          <strong>{formatMatchAccuracy(song.match_accuracy)}</strong>
         </div>
 
         <audio controls src={song.audio_preview_url}>
