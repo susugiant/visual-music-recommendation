@@ -1,12 +1,30 @@
 const emojiOptions = ["✨", "🌅", "💫", "🎧", "❤️", "🔥", "🌊", "🪩"];
 
+const fontOptions = [
+  "Inter",
+  "Arial",
+  "Georgia",
+  "Trebuchet MS",
+  "Courier New"
+];
+
 function EditorToolbar({
   analysis,
   overlayText,
   onOverlayTextChange,
   selectedEmoji,
   onEmojiChange,
-  onClearOverlay
+  onClearOverlay,
+  textScale,
+  onTextScaleChange,
+  emojiScale,
+  onEmojiScaleChange,
+  textColor,
+  onTextColorChange,
+  textFont,
+  onTextFontChange,
+  textWeight,
+  onTextWeightChange
 }) {
   const moods = analysis?.detected_mood || [];
   const colors = analysis?.color_palette || [];
@@ -17,7 +35,7 @@ function EditorToolbar({
         <p className="eyebrow">Editor Tools</p>
         <h2>Create Your Post</h2>
         <p className="panel-description">
-          Add simple text and emoji overlays to make the preview feel like a
+          Add text, emoji, and simple styling to make the preview feel like a
           social media post.
         </p>
       </div>
@@ -70,6 +88,60 @@ function EditorToolbar({
       </div>
 
       <div className="tool-block">
+        <h3>Text Style</h3>
+
+        <label className="control-label">
+          Text size
+          <input
+            type="range"
+            min="0.7"
+            max="1.8"
+            step="0.1"
+            value={textScale}
+            onChange={(event) => onTextScaleChange(Number(event.target.value))}
+          />
+        </label>
+
+        <label className="control-label">
+          Text color
+          <input
+            className="color-input"
+            type="color"
+            value={textColor}
+            onChange={(event) => onTextColorChange(event.target.value)}
+          />
+        </label>
+
+        <label className="control-label">
+          Font
+          <select
+            className="select-input"
+            value={textFont}
+            onChange={(event) => onTextFontChange(event.target.value)}
+          >
+            {fontOptions.map((font) => (
+              <option key={font} value={font}>
+                {font}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="control-label">
+          Weight
+          <select
+            className="select-input"
+            value={textWeight}
+            onChange={(event) => onTextWeightChange(event.target.value)}
+          >
+            <option value="600">Regular</option>
+            <option value="800">Bold</option>
+            <option value="950">Extra Bold</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="tool-block">
         <h3>Emoji Sticker</h3>
 
         <div className="emoji-list">
@@ -86,15 +158,27 @@ function EditorToolbar({
             </button>
           ))}
         </div>
+
+        <label className="control-label emoji-size-control">
+          Emoji size
+          <input
+            type="range"
+            min="0.6"
+            max="2"
+            step="0.1"
+            value={emojiScale}
+            onChange={(event) => onEmojiScaleChange(Number(event.target.value))}
+          />
+        </label>
       </div>
 
-      <button
-        className="clear-button"
-        type="button"
-        onClick={onClearOverlay}
-      >
+      <button className="clear-button" type="button" onClick={onClearOverlay}>
         Clear Text & Emoji
       </button>
+
+      <p className="drag-hint">
+        Tip: drag the text or emoji directly on the phone preview.
+      </p>
     </section>
   );
 }
