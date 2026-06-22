@@ -1,8 +1,9 @@
 import { useState } from "react";
 import "./App.css";
 import UploadBox from "./components/UploadBox";
-import AnalysisPanel from "./components/AnalysisPanel";
-import RecommendationList from "./components/RecommendationList";
+import CreativePreview from "./components/CreativePreview";
+import SongSelectorPanel from "./components/SongSelectorPanel";
+import EditorToolbar from "./components/EditorToolbar";
 import { getImageRecommendations } from "./services/recommendationApi";
 
 function App() {
@@ -10,6 +11,9 @@ function App() {
   const [imagePreview, setImagePreview] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
+  const [selectedSong, setSelectedSong] = useState(null);
+  const [overlayText, setOverlayText] = useState("golden hour memories");
+  const [selectedEmoji, setSelectedEmoji] = useState("✨");
   const [errorMessage, setErrorMessage] = useState("");
 
   function handleImageChange(event) {
@@ -24,6 +28,7 @@ function App() {
     setSelectedFile(file);
     setImagePreview(previewUrl);
     setResult(null);
+    setSelectedSong(null);
     setErrorMessage("");
   }
 
@@ -35,11 +40,14 @@ function App() {
 
     setIsAnalyzing(true);
     setResult(null);
+    setSelectedSong(null);
     setErrorMessage("");
 
     try {
       const recommendationResult = await getImageRecommendations(selectedFile);
+
       setResult(recommendationResult);
+      setSelectedSong(recommendationResult.recommendations?.[0] || null);
     } catch (error) {
       console.error(error);
       setErrorMessage("Unable to analyze this image. Please try again.");
@@ -48,8 +56,28 @@ function App() {
     }
   }
 
+  function handleClearOverlay() {
+    setOverlayText("");
+    setSelectedEmoji("");
+  }
+
+  const analysis = result?.analysis;
+  const songs = result?.recommendations || [];
+
   return (
     <main className="app">
+      <header className="app-header">
+        <div>
+          <p className="eyebrow">Visual Music Recommendation</p>
+          <h1>AI Social Music Editor</h1>
+        </div>
+
+        <p>
+          Upload an image, get mood-matched songs, choose a track, and preview
+          your post like a mini TikTok or Instagram editor.
+        </p>
+      </header>
+
       <UploadBox
         imagePreview={imagePreview}
         onImageChange={handleImageChange}
@@ -71,20 +99,40 @@ function App() {
         </section>
       )}
 
-      {!imagePreview && (
+      {!imagePreview && !isAnalyzing && (
         <section className="empty-state">
           <h2>Start with an image</h2>
           <p>
-            Upload a photo first. The result section will appear after the image
+            Upload a photo first. The editor preview will appear after the image
             is analyzed.
           </p>
         </section>
       )}
 
-      {result?.status === "success" && (
-        <section className="result-layout">
-          <AnalysisPanel analysis={result.analysis} />
-          <RecommendationList songs={result.recommendations} />
+      {imagePreview && (
+        <section className="creator-studio">
+          <EditorToolbar
+            analysis={analysis}
+            overlayText={overlayText}
+            onOverlayTextChange={setOverlayText}
+            selectedEmoji={selectedEmoji}
+            onEmojiChange={setSelectedEmoji}
+            onClearOverlay={handleClearOverlay}
+          />
+
+          <CreativePreview
+            imagePreview={imagePreview}
+            selectedSong={selectedSong}
+            analysis={analysis}
+            overlayText={overlayText}
+            selectedEmoji={selectedEmoji}
+          />
+
+          <SongSelectorPanel
+            songs={songs}
+            selectedSong={selectedSong}
+            onSelectSong={setSelectedSong}
+          />
         </section>
       )}
     </main>

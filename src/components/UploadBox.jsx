@@ -2,36 +2,35 @@ function UploadBox({ imagePreview, onImageChange, onAnalyze, isAnalyzing }) {
   return (
     <section className="upload-card">
       <div className="upload-content">
-        <p className="eyebrow">Upload Image</p>
-        <h1>Find songs that match your visual mood</h1>
+        <p className="eyebrow">Step 1</p>
+        <h2>Upload your visual</h2>
         <p className="subtitle">
-          Choose an image, preview it, then let the system recommend music based
-          on detected mood and color palette.
+          Choose an image and let the system suggest songs that match its mood,
+          color, and atmosphere.
         </p>
 
-        <label className="file-label">
-          <input type="file" accept="image/*" onChange={onImageChange} />
-          <span>Choose Image</span>
-        </label>
+        <div className="upload-actions">
+          <label className="file-label">
+            <input type="file" accept="image/*" onChange={onImageChange} />
+            <span>{imagePreview ? "Change Image" : "Choose Image"}</span>
+          </label>
 
-        {imagePreview && (
           <button
             className="analyze-button"
             onClick={onAnalyze}
-            disabled={isAnalyzing}
+            disabled={!imagePreview || isAnalyzing}
+            type="button"
           >
             {isAnalyzing ? "Analyzing..." : "Analyze Image"}
           </button>
-        )}
+        </div>
       </div>
 
-      <div className="preview-panel">
+      <div className="upload-preview-mini">
         {imagePreview ? (
           <img src={imagePreview} alt="Uploaded preview" />
         ) : (
-          <div className="empty-preview">
-            <span>Image preview will appear here</span>
-          </div>
+          <span>No image selected</span>
         )}
       </div>
     </section>
