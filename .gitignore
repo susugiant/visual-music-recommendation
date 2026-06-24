@@ -22,3 +22,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python & Virtual Environment
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+
+# Data & Large Files
+backend/data/
+*.bin
+*.pt
+
+# Secrets
+.env
