@@ -27,8 +27,7 @@ function SongSelectorPanel({ songs, selectedSong, onSelectSong }) {
       </div>
 
       <div className="match-warning-note">
-        If the match score is low, the selected track may not perfectly match
-        the uploaded image mood.
+        Low match means the recommendation may be less accurate.
       </div>
 
       <div className="selector-song-list">
