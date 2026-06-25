@@ -5,6 +5,7 @@ import CreativePreview from "./components/CreativePreview";
 import SongSelectorPanel from "./components/SongSelectorPanel";
 import EditorToolbar from "./components/EditorToolbar";
 import FinalPreviewModal from "./components/FinalPreviewModal";
+import AIAnalysisPanel from "./components/AIAnalysisPanel";
 import { getImageRecommendations } from "./services/recommendationApi";
 import { exportElementAsPng } from "./utils/exportPreview";
 
@@ -13,10 +14,11 @@ function App() {
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [imageInfo, setImageInfo] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [selectedSong, setSelectedSong] = useState(null);
-  const [overlayText, setOverlayText] = useState("golden hour memories");
+  const [overlayText, setOverlayText] = useState("");
   const [selectedEmoji, setSelectedEmoji] = useState("✨");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -30,7 +32,7 @@ function App() {
   const [isFinalPreviewOpen, setIsFinalPreviewOpen] = useState(false);
 
   function resetEditorState() {
-    setOverlayText("golden hour memories");
+    setOverlayText("");
     setSelectedEmoji("✨");
     setTextPosition({ x: 50, y: 63 });
     setEmojiPosition({ x: 72, y: 30 });
@@ -49,6 +51,16 @@ function App() {
     }
 
     const previewUrl = URL.createObjectURL(file);
+    const imageElement = new Image();
+
+    imageElement.onload = () => {
+      setImageInfo({
+        width: imageElement.naturalWidth,
+        height: imageElement.naturalHeight
+      });
+    };
+
+    imageElement.src = previewUrl;
 
     setSelectedFile(file);
     setImagePreview(previewUrl);
@@ -88,6 +100,10 @@ function App() {
     setSelectedEmoji("");
   }
 
+  function handleSelectSong(song) {
+    setSelectedSong(song);
+  }
+
   async function handleExportPreview() {
     try {
       await exportElementAsPng(previewRef.current, "ai-music-post-preview.png");
@@ -107,17 +123,18 @@ function App() {
       <header className="app-header">
         <div>
           <p className="eyebrow">Visual Music Recommendation</p>
-          <h1>AI Social Music Editor</h1>
+          <h1>AI Music Mood Lab</h1>
         </div>
 
         <p>
-          Upload an image, get mood-matched songs, choose a track, and preview
-          your post like a mini TikTok or Instagram editor.
+          Analyze image mood with AI, inspect confidence scores, then match the
+          visual vibe with tracks from the music dataset.
         </p>
       </header>
 
       <UploadBox
         imagePreview={imagePreview}
+        imageInfo={imageInfo}
         onImageChange={handleImageChange}
         onAnalyze={handleAnalyze}
         isAnalyzing={isAnalyzing}
@@ -141,32 +158,35 @@ function App() {
         <section className="empty-state">
           <h2>Start with an image</h2>
           <p>
-            Upload a photo first. The editor preview will appear after the image
-            is analyzed.
+            Upload a photo first. The AI analysis and editor preview will appear
+            after the image is analyzed.
           </p>
         </section>
       )}
 
       {imagePreview && (
         <section className="creator-studio">
-          <EditorToolbar
-            analysis={analysis}
-            overlayText={overlayText}
-            onOverlayTextChange={setOverlayText}
-            selectedEmoji={selectedEmoji}
-            onEmojiChange={setSelectedEmoji}
-            onClearOverlay={handleClearOverlay}
-            textScale={textScale}
-            onTextScaleChange={setTextScale}
-            emojiScale={emojiScale}
-            onEmojiScaleChange={setEmojiScale}
-            textColor={textColor}
-            onTextColorChange={setTextColor}
-            textFont={textFont}
-            onTextFontChange={setTextFont}
-            textWeight={textWeight}
-            onTextWeightChange={setTextWeight}
-          />
+          <div className="left-studio-stack">
+            <AIAnalysisPanel analysis={analysis} isAnalyzing={isAnalyzing} />
+
+            <EditorToolbar
+              overlayText={overlayText}
+              onOverlayTextChange={setOverlayText}
+              selectedEmoji={selectedEmoji}
+              onEmojiChange={setSelectedEmoji}
+              onClearOverlay={handleClearOverlay}
+              textScale={textScale}
+              onTextScaleChange={setTextScale}
+              emojiScale={emojiScale}
+              onEmojiScaleChange={setEmojiScale}
+              textColor={textColor}
+              onTextColorChange={setTextColor}
+              textFont={textFont}
+              onTextFontChange={setTextFont}
+              textWeight={textWeight}
+              onTextWeightChange={setTextWeight}
+            />
+          </div>
 
           <CreativePreview
             previewRef={previewRef}
@@ -191,7 +211,7 @@ function App() {
           <SongSelectorPanel
             songs={songs}
             selectedSong={selectedSong}
-            onSelectSong={setSelectedSong}
+            onSelectSong={handleSelectSong}
           />
         </section>
       )}

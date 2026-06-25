@@ -1,12 +1,18 @@
-function UploadBox({ imagePreview, onImageChange, onAnalyze, isAnalyzing }) {
+function UploadBox({
+  imagePreview,
+  imageInfo,
+  onImageChange,
+  onAnalyze,
+  isAnalyzing
+}) {
   return (
     <section className="upload-card">
       <div className="upload-content">
         <p className="eyebrow">Step 1</p>
         <h2>Upload your visual</h2>
         <p className="subtitle">
-          Choose an image and let the system suggest songs that match its mood,
-          color, and atmosphere.
+          Choose an image and let the AI model analyze visual mood, color, and
+          atmosphere before matching it with music.
         </p>
 
         <div className="upload-actions">
@@ -26,9 +32,21 @@ function UploadBox({ imagePreview, onImageChange, onAnalyze, isAnalyzing }) {
         </div>
       </div>
 
-      <div className="upload-preview-mini">
+      <div
+        className={`upload-preview-mini ${
+          imageInfo?.height > imageInfo?.width ? "portrait-preview" : "landscape-preview"
+        }`}
+      >
         {imagePreview ? (
-          <img src={imagePreview} alt="Uploaded preview" />
+          <>
+            <img src={imagePreview} alt="Uploaded preview" />
+
+            {imageInfo && (
+              <div className="image-info-badge">
+                {imageInfo.width} × {imageInfo.height}
+              </div>
+            )}
+          </>
         ) : (
           <span>No image selected</span>
         )}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatMatchAccuracy } from "../utils/formatters";
 
 function clamp(value, min, max) {
@@ -24,8 +24,44 @@ function CreativePreview({
   onOpenFinalPreview,
   onExportPreview
 }) {
+  const audioRef = useRef(null);
   const [dragTarget, setDragTarget] = useState(null);
+  const [audioStatus, setAudioStatus] = useState("");
+
   const moods = analysis?.detected_mood || [];
+
+  useEffect(() => {
+    if (!selectedSong) {
+      setAudioStatus("");
+      return;
+    }
+
+    if (!selectedSong.audio_preview_url) {
+      setAudioStatus("Audio preview is not available for this track.");
+      return;
+    }
+
+    const audioElement = audioRef.current;
+
+    if (!audioElement) {
+      return;
+    }
+
+    audioElement.pause();
+    audioElement.currentTime = 0;
+    audioElement.src = selectedSong.audio_preview_url;
+
+    audioElement
+      .play()
+      .then(() => {
+        setAudioStatus("Auto-playing selected preview.");
+      })
+      .catch(() => {
+        setAudioStatus(
+          "Browser blocked autoplay. Click another track to try again."
+        );
+      });
+  }, [selectedSong]);
 
   function updateOverlayPosition(event, target) {
     const previewElement = previewRef.current;
@@ -71,8 +107,8 @@ function CreativePreview({
   return (
     <section className="creative-preview-section">
       <div className="preview-heading">
-        <p className="eyebrow">Live Preview</p>
-        <h2>Final Post Preview</h2>
+        <p className="eyebrow">Creator Preview</p>
+        <h2>Social Post Output</h2>
       </div>
 
       <div className="phone-frame">
@@ -152,21 +188,17 @@ function CreativePreview({
         </div>
       </div>
 
-      {selectedSong?.audio_preview_url ? (
-        <audio
-          className="preview-audio"
-          controls
-          src={selectedSong.audio_preview_url}
-        >
-          Your browser does not support the audio element.
-        </audio>
-      ) : (
-        <p className="export-note">
-          Audio preview is not available for this song. You can still open it on Spotify.
+      <audio ref={audioRef} className="hidden-audio" />
+
+      {selectedSong && (
+        <p className="audio-status">
+          {audioStatus || "Click a recommended track to auto-play preview."}
         </p>
       )}
+
       <p className="export-note">
-        Audio plays in the web preview. Exported image contains visual elements only.
+        Audio plays in the web preview. Exported image contains visual elements
+        only.
       </p>
 
       <div className="preview-actions">

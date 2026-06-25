@@ -32,12 +32,30 @@ async function fetchSongPreview(title, artist) {
   }
 }
 
-function capitalizeMood(mood) {
-  if (!mood || typeof mood !== "string") {
+function formatVibeLabel(vibe) {
+  if (!vibe || typeof vibe !== "string") {
     return "Unknown";
   }
 
-  return mood.charAt(0).toUpperCase() + mood.slice(1);
+  return vibe
+    .replaceAll("_", " ")
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function normalizeConfidenceScores(confidenceScores) {
+  if (!confidenceScores || typeof confidenceScores !== "object") {
+    return [];
+  }
+
+  return Object.entries(confidenceScores)
+    .map(([vibe, score]) => ({
+      raw_vibe: vibe,
+      vibe: formatVibeLabel(vibe),
+      score: typeof score === "number" ? score : Number(score) || 0
+    }))
+    .sort((a, b) => b.score - a.score);
 }
 
 function createFallbackSongId(track, index) {
@@ -78,6 +96,12 @@ export async function getImageRecommendations(imageFile) {
     const rawVibes =
       liveData.vibes || (liveData.vibe ? [liveData.vibe] : ["Unknown"]);
 
+    const confidenceList = normalizeConfidenceScores(
+      liveData.confidence_scores
+    );
+
+    const detectedMoods = rawVibes.map(formatVibeLabel);
+
     const mappedRecommendations = await Promise.all(
       (liveData.tracks || []).map(async (track, index) => {
         const songPreview = await fetchSongPreview(track.title, track.artist);
@@ -114,8 +138,15 @@ export async function getImageRecommendations(imageFile) {
     return {
       status: liveData.success ? "success" : "error",
       analysis: {
-        detected_mood: rawVibes.map(capitalizeMood),
-        color_palette: ["#1DB954", "#191414", "#212121"]
+        detected_mood: detectedMoods,
+        color_palette: ["#1DB954", "#191414", "#212121"],
+
+        // Extra frontend analysis fields.
+        // These do not break the old API contract.
+        is_multivibe: rawVibes.length > 1,
+        confidence_scores: confidenceList,
+        primary_vibe: detectedMoods[0] || "Unknown",
+        secondary_vibe: detectedMoods[1] || null
       },
       recommendations: mappedRecommendations
     };

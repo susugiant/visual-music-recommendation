@@ -9,7 +9,6 @@ const fontOptions = [
 ];
 
 function EditorToolbar({
-  analysis,
   overlayText,
   onOverlayTextChange,
   selectedEmoji,
@@ -26,70 +25,33 @@ function EditorToolbar({
   textWeight,
   onTextWeightChange
 }) {
-  const moods = analysis?.detected_mood || [];
-  const colors = analysis?.color_palette || [];
-
   return (
-    <section className="editor-toolbar">
+    <section className="editor-toolbar compact-editor">
       <div className="panel-header">
-        <p className="eyebrow">Editor Tools</p>
-        <h2>Create Your Post</h2>
+        <p className="eyebrow">Post Editor</p>
+        <h2>Caption & Sticker</h2>
         <p className="panel-description">
-          Add text, emoji, and simple styling to make the preview feel like a
-          social media post.
+          Keep it simple: add a caption, choose an emoji, then drag them on the
+          phone preview.
         </p>
       </div>
 
       <div className="tool-block">
-        <h3>Detected Mood</h3>
-
-        {moods.length > 0 ? (
-          <div className="compact-mood-list">
-            {moods.map((mood) => (
-              <span key={mood}>{mood}</span>
-            ))}
-          </div>
-        ) : (
-          <p className="muted-text">No mood detected yet.</p>
-        )}
-      </div>
-
-      <div className="tool-block">
-        <h3>Color Palette</h3>
-
-        {colors.length > 0 ? (
-          <div className="compact-palette-list">
-            {colors.map((color) => (
-              <span
-                key={color}
-                style={{ backgroundColor: color }}
-                title={color}
-              ></span>
-            ))}
-          </div>
-        ) : (
-          <p className="muted-text">No palette available yet.</p>
-        )}
-      </div>
-
-      <div className="tool-block">
-        <h3>Overlay Text</h3>
+        <h3>Caption</h3>
 
         <input
           className="text-input"
           type="text"
           value={overlayText}
           onChange={(event) => onOverlayTextChange(event.target.value)}
-          placeholder="Type something like: golden hour"
+          placeholder="Input your caption..."
           maxLength={40}
         />
 
         <p className="input-hint">{overlayText.length}/40 characters</p>
       </div>
 
-      <div className="tool-block">
-        <h3>Text Style</h3>
-
+      <div className="tool-grid">
         <label className="control-label">
           Text size
           <input
@@ -173,11 +135,11 @@ function EditorToolbar({
       </div>
 
       <button className="clear-button" type="button" onClick={onClearOverlay}>
-        Clear Text & Emoji
+        Clear Caption & Emoji
       </button>
 
       <p className="drag-hint">
-        Tip: drag the text or emoji directly on the phone preview.
+        Tip: drag the caption or emoji directly on the phone preview.
       </p>
     </section>
   );

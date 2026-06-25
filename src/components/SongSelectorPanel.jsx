@@ -1,5 +1,7 @@
 import { formatMatchAccuracy } from "../utils/formatters";
 
+const LOW_MATCH_THRESHOLD = 0.7;
+
 function SongSelectorPanel({ songs, selectedSong, onSelectSong }) {
   if (!songs || songs.length === 0) {
     return (
@@ -16,37 +18,47 @@ function SongSelectorPanel({ songs, selectedSong, onSelectSong }) {
   return (
     <section className="song-selector-panel">
       <div className="panel-header">
-        <p className="eyebrow">Music Options</p>
-        <h2>Change Song</h2>
+        <p className="eyebrow">Music Dataset</p>
+        <h2>Recommended Tracks</h2>
         <p className="panel-description">
-          Pick a track and the preview will update instantly.
+          Click a track to select it. The preview audio will play automatically
+          when available.
         </p>
+      </div>
+
+      <div className="match-warning-note">
+        If the match score is low, the selected track may not perfectly match
+        the uploaded image mood.
       </div>
 
       <div className="selector-song-list">
         {songs.map((song) => {
           const isSelected = selectedSong?.song_id === song.song_id;
+          const isLowMatch = song.match_accuracy < LOW_MATCH_THRESHOLD;
 
           return (
             <button
-              className={`selector-song-card ${isSelected ? "selected" : ""}`}
+              className={`selector-song-card ${isSelected ? "selected" : ""} ${
+                isLowMatch ? "low-match" : ""
+              }`}
               key={song.song_id}
               onClick={() => onSelectSong(song)}
               type="button"
             >
-              <img
-                src={song.cover_image_url}
-                alt={`${song.title} cover`}
-              />
+              <img src={song.cover_image_url} alt={`${song.title} cover`} />
 
               <div className="selector-song-info">
                 <strong>{song.title}</strong>
                 <span>{song.artist}</span>
                 <small>{formatMatchAccuracy(song.match_accuracy)} match</small>
+
+                {isLowMatch && (
+                  <em>Low match</em>
+                )}
               </div>
 
               <span className="use-song-label">
-                {isSelected ? "Using" : "Use"}
+                {isSelected ? "Playing" : "Play"}
               </span>
             </button>
           );
