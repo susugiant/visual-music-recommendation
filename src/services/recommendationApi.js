@@ -1,37 +1,70 @@
-// src/services/recommendationApi.js
-
 const API_BASE_URL = "http://localhost:8000";
 
-/**
- * Helper function that queries the open iTunes API to find a 30-second
- * streamable MP3 preview for any song title and artist combination.
- */
-const fetchAudioPreviewUrl = async (title, artist) => {
+async function fetchSongPreview(title, artist) {
   try {
     const searchQuery = encodeURIComponent(`${title} ${artist}`);
     const url = `https://itunes.apple.com/search?term=${searchQuery}&entity=song&limit=1`;
 
     const response = await fetch(url);
-    if (!response.ok) return ""; // Fallback gracefully if request fails
+
+    if (!response.ok) {
+      return {
+        previewUrl: "",
+        artworkUrl: ""
+      };
+    }
 
     const data = await response.json();
-    if (data.results && data.results.length > 0) {
-      return data.results[0].previewUrl; // Returns the direct 30s .mp3 stream link
-    }
-  } catch (err) {
-    console.error(`⚠️ Preview lookup failed for ${title}:`, err);
-  }
-  return ""; // Safe empty string fallback
-};
+    const firstResult = data.results?.[0];
 
-export const getImageRecommendations = async (imageFile) => {
+    return {
+      previewUrl: firstResult?.previewUrl || "",
+      artworkUrl:
+        firstResult?.artworkUrl100?.replace("100x100bb", "400x400bb") || ""
+    };
+  } catch (error) {
+    console.error(`Preview lookup failed for ${title}:`, error);
+
+    return {
+      previewUrl: "",
+      artworkUrl: ""
+    };
+  }
+}
+
+function capitalizeMood(mood) {
+  if (!mood || typeof mood !== "string") {
+    return "Unknown";
+  }
+
+  return mood.charAt(0).toUpperCase() + mood.slice(1);
+}
+
+function createFallbackSongId(track, index) {
+  const title = track.title || "unknown-title";
+  const artist = track.artist || "unknown-artist";
+
+  return `${title}-${artist}-${index}`;
+}
+
+function normalizeMatchAccuracy(track, index) {
+  const rawScore = track.match_score ?? track.match_accuracy;
+
+  if (typeof rawScore === "number") {
+    return Math.min(Math.max(rawScore, 0), 1);
+  }
+
+  return Math.max(0.98 - index * 0.03, 0.7);
+}
+
+export async function getImageRecommendations(imageFile) {
   try {
     const formData = new FormData();
     formData.append("file", imageFile);
 
     const response = await fetch(`${API_BASE_URL}/api/recommend`, {
       method: "POST",
-      body: formData,
+      body: formData
     });
 
     if (!response.ok) {
@@ -40,57 +73,54 @@ export const getImageRecommendations = async (imageFile) => {
 
     const liveData = await response.json();
 
-    // 🌟 BULLETPROOF FALLBACK LOGIC:
-    // If the backend sent 'vibes' as an array, use it.
-    // If it sent the old single 'vibe', wrap it in an array automatically.
-    // If both are missing, default to ["Unknown"].
+    console.log("Backend raw response:", liveData);
+
     const rawVibes =
       liveData.vibes || (liveData.vibe ? [liveData.vibe] : ["Unknown"]);
 
-    // 🌟 DYNAMIC AUDIO PREVIEW PIPELINE 🌟
-    // We run the iTunes lookup asynchronously for all 5 recommended tracks simultaneously
-    const trackPromises = (liveData.tracks || []).map(async (track, index) => {
-      const realPreviewMp3 = await fetchAudioPreviewUrl(
-        track.title,
-        track.artist,
-      );
+    const mappedRecommendations = await Promise.all(
+      (liveData.tracks || []).map(async (track, index) => {
+        const songPreview = await fetchSongPreview(track.title, track.artist);
 
-      return {
-        song_id: track.track_id,
-        title: track.title,
-        artist: track.artist,
-        spotify_url: track.spotify_url,
-        cover_image_url: "https://placehold.co/400?text=No+Cover",
-        // Passes the unique, matching 30-second stream straight to the player component
-        audio_preview_url: realPreviewMp3,
-        match_accuracy: 0.98 - index * 0.03,
-      };
-    });
+        return {
+          song_id:
+            track.track_id ||
+            track.song_id ||
+            createFallbackSongId(track, index),
 
-    // Resolve all lookups together before sending data to React
-    const mappedRecommendations = await Promise.all(trackPromises);
+          title: track.title || "Unknown Title",
+          artist: track.artist || "Unknown Artist",
+
+          spotify_url: track.spotify_url || "",
+
+          cover_image_url:
+            track.cover_image_url ||
+            songPreview.artworkUrl ||
+            "https://placehold.co/400x400/191414/FFFFFF?text=No+Cover",
+
+          audio_preview_url:
+            track.audio_preview_url ||
+            track.preview_url ||
+            songPreview.previewUrl ||
+            "",
+
+          match_accuracy: normalizeMatchAccuracy(track, index)
+        };
+      })
+    );
+
+    console.log("Mapped recommendations:", mappedRecommendations);
 
     return {
       status: liveData.success ? "success" : "error",
       analysis: {
-        // Map over the safe array and capitalize the terms cleanly
-        detected_mood: rawVibes.map(
-          (v) => v.charAt(0).toUpperCase() + v.slice(1),
-        ),
-        color_palette: ["#1DB954", "#191414", "#212121"],
+        detected_mood: rawVibes.map(capitalizeMood),
+        color_palette: ["#1DB954", "#191414", "#212121"]
       },
-      recommendations: (liveData.tracks || []).map((track, index) => ({
-        song_id: track.track_id,
-        title: track.title,
-        artist: track.artist,
-        spotify_url: track.spotify_url,
-        cover_image_url: "https://placehold.co/400?text=No+Cover",
-        audio_preview_url: track.spotify_url,
-        match_accuracy: 0.98 - index * 0.03,
-      })),
+      recommendations: mappedRecommendations
     };
   } catch (error) {
-    console.error("🔴 Live AI connection failed:", error);
+    console.error("Live AI connection failed:", error);
     throw error;
   }
-};
+}
