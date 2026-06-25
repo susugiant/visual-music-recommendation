@@ -24,10 +24,10 @@ VIBE_PROMPTS = [
 PROMPT_TO_VIBE = {
     "a chill lofi aesthetic photo": "chill/lofi",
     "a hype energetic aesthetic photo": "hype/energetic",
-    "a melancholic sad aesthetic photo": "melancholic",
-    "a romantic in love aesthetic photo": "romantic",
+    "a melancholic sad aesthetic photo": "melancholic/sad",
+    "a romantic in love aesthetic photo": "romantic/inlove",
     "a cinematic epic aesthetic photo": "cinematic/epic",
-    "a soft gentle aesthetic photo": "soft",
+    "a soft gentle aesthetic photo": "soft/gentle",
     "an edgy individualistic aesthetic photo": "edgy/individualistic"
 }
 

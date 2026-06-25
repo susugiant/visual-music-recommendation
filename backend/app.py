@@ -1,5 +1,6 @@
 import os
 import shutil
+import random
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,13 +15,12 @@ app = FastAPI(
 )
 
 # --- CORS CONFIGURATION ---
-# This permits your React/Vite frontend (running on port 5173) to securely communicate with this API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows POST, GET, OPTIONS, etc.
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Ensure a temporary directory exists to hold uploaded images while processing
@@ -38,8 +38,8 @@ def read_root():
 async def recommend_music_from_image(file: UploadFile = File(...)):
     """
     Main endpoint for the React Frontend.
-    Accepts an uploaded image file, extracts the vibe using CLIP,
-    queries the Spotify database, and returns the tracklist.
+    Accepts an uploaded image file, computes multi-vibe classification,
+    queries the local track pools, and returns a tailored playlist.
     """
     # 1. Guardrail: Validate file extension type
     allowed_extensions = [".jpg", ".jpeg", ".png", ".webp"]
@@ -56,17 +56,61 @@ async def recommend_music_from_image(file: UploadFile = File(...)):
         # 3. Fire up your CLIP AI pipeline
         winning_vibe, confidence_scores = predict_image_vibe(temp_file_path)
 
-        if not winning_vibe:
+        if not winning_vibe or not confidence_scores:
             raise HTTPException(status_code=500, detail="AI engine failed to analyze the image.")
 
-        # 4. Fire up your Spotify recommender system
-        # top_k=5 gives them 5 songs to display. They can call this again to "re-roll"
-        recommended_tracks = get_song_recommendations(winning_vibe, top_k=5)
+        # 4. 🧠 MULTI-VIBE LOGIC: Sort categories from highest to lowest score
+        sorted_vibes = sorted(confidence_scores.items(), key=lambda item: item[1], reverse=True)
 
-        # 5. Send the clean payload back to the React UI team
+        primary_vibe, primary_score = sorted_vibes[0]
+        secondary_vibe, secondary_score = sorted_vibes[1]
+
+        primary_score = float(primary_score)
+        secondary_score = float(secondary_score)
+
+        recommended_tracks = []
+        top_vibes = []
+
+        # Margin rule: Is second place close enough to count as a runner-up?
+        VIBE_GAP_THRESHOLD = 0.15
+        actual_gap = primary_score - secondary_score
+
+        # Case A: Close Race -> Trigger Hybrid Multi-Vibe state
+        if actual_gap <= VIBE_GAP_THRESHOLD:
+            print(f"🌟 Multi-Vibe triggered! Gap is {actual_gap:.3f} between {primary_vibe} and {secondary_vibe}")
+            top_vibes = [primary_vibe, secondary_vibe]
+
+            # Fetch 3 tracks from primary and 2 tracks from secondary to make a total of 5
+            primary_tracks = get_song_recommendations(primary_vibe, top_k=3)
+            secondary_tracks = get_song_recommendations(secondary_vibe, top_k=2)
+
+            # Inject matching accuracy attributes into the dictionary blocks
+            for track in primary_tracks:
+                track["match_score"] = primary_score
+            for track in secondary_tracks:
+                track["match_score"] = secondary_score
+
+            recommended_tracks.extend(primary_tracks)
+            recommended_tracks.extend(secondary_tracks)
+            random.shuffle(recommended_tracks) # Mix them cleanly
+
+        # Case B: Blowout Win -> Single vibe dominates completely
+        else:
+            print(f"🎯 Single Vibe Dominates! Gap is {actual_gap:.3f}. Winner: {primary_vibe}")
+            top_vibes = [primary_vibe]
+
+            # Maximize diversity by grabbing all 5 tracks from the winning class pool
+            primary_tracks = get_song_recommendations(primary_vibe, top_k=5)
+            for track in primary_tracks:
+                track["match_score"] = primary_score
+
+            recommended_tracks.extend(primary_tracks)
+
+        # 5. Send payload back to the React UI team
         return {
             "success": True,
-            "vibe": winning_vibe,
+            "vibe": primary_vibe,               # Kept for single-vibe backwards compatibility
+            "vibes": top_vibes,                 # Array containing 1 or 2 items dynamically
             "confidence_scores": confidence_scores,
             "tracks": recommended_tracks
         }
@@ -76,6 +120,6 @@ async def recommend_music_from_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="Internal server error while parsing request.")
 
     finally:
-        # 6. Cleanup: Always delete the temporary image file so your server doesn't run out of storage
+        # 6. Cleanup: Delete temporary files to safeguard storage limits
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)

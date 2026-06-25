@@ -8,10 +8,14 @@ INPUT_CSV = os.path.join(DATA_DIR, "manual_labels.csv")
 OUTPUT_CSV = os.path.join(DATA_DIR, "ground_truth.csv")
 
 def calculate_majority(row):
-    # Gather the 3 votes, cleaning up any accidental whitespaces
-    votes = [str(row['annotator_1']).strip().lower(),
-             str(row['annotator_2']).strip().lower(),
-             str(row['annotator_3']).strip().lower()]
+    """
+    Gathers the 3 votes exactly based on your columns: Vy, Tram, and Linh.
+    """
+    votes = [
+        str(row['Vy']).strip().lower(),
+        str(row['Tram']).strip().lower(),
+        str(row['Linh']).strip().lower()
+    ]
 
     # Count occurrences of each vote
     vote_counts = Counter(votes)
@@ -19,7 +23,7 @@ def calculate_majority(row):
     # Get the most common vote and its frequency
     most_common_vibe, count = vote_counts.most_common(1)[0]
 
-    # If the top vote only appears once, it means all 3 people voted differently (a 3-way tie)
+    # If the top vote only appears once, it's a 3-way tie
     if count == 1:
         return "DISCARD_TIE"
 
@@ -33,17 +37,27 @@ def main():
     # Load the team's manual entries
     df = pd.read_csv(INPUT_CSV)
 
-    print("🤖 Computing majority votes for the dataset..."dafasdf
-    # Apply our voting rule across every row
-    df['ground_truth_vibe'] = df.apply(calculate_majority, axis=1)
+    # Strip any hidden whitespace from column headers to keep mapping clean
+    df.columns = df.columns.str.strip()
 
-    # Check if there are any chaotic ties we need to throw away
-    tie_count = len(df[df['ground_truth_vibe'] == "DISCARD_TIE"])
+    print("🤖 Computing majority votes for the dataset...")
+
+    # Apply the voting math to compute the true majority vote
+    df['Calculated_Final'] = df.apply(calculate_majority, axis=1)
+
+    # Count up the chaotic voting ties
+    tie_count = len(df[df['Calculated_Final'] == "DISCARD_TIE"])
     if tie_count > 0:
-        print(f"⚠️ Warning: Found {tie_count} images with complete disagreements. You should replace these!")
+        print(f"⚠️ Warning: Found {tie_count} images with complete disagreements. Filtering them out!")
 
-    # Save a clean dataset that only contains the file name and the verified label
-    final_df = df[df['ground_truth_vibe'] != "DISCARD_TIE"][['image_filename', 'ground_truth_vibe']]
+    # Filter out rows that are ties
+    clean_df = df[df['Calculated_Final'] != "DISCARD_TIE"].copy()
+
+    # Create the clean dataframe with your exact structural output format
+    final_df = clean_df[['Folder', 'Number']].copy()
+    final_df['Final'] = clean_df['Calculated_Final']
+
+    # Save to ground_truth.csv
     final_df.to_csv(OUTPUT_CSV, index=False)
 
     print(f"🎉 Success! Finalized ground truth dataset saved to {OUTPUT_CSV}")
