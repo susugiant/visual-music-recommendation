@@ -32,9 +32,10 @@ def get_song_recommendations(vibe_category: str, top_k: int = 5):
     tracks_payload = []
     for _, row in sampled_tracks.iterrows():
         tracks_payload.append({
-            "title": row['title'],
-            "artist": row['artist'],
-            "spotify_url": row['spotify_url']
+            "track_id": row["track_id"],
+            "title": row["title"],
+            "artist": row["artist"],
+            "spotify_url": row["spotify_url"]
         })
 
     return tracks_payload

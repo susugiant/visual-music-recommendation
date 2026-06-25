@@ -152,7 +152,7 @@ function CreativePreview({
         </div>
       </div>
 
-      {selectedSong && (
+      {selectedSong?.audio_preview_url ? (
         <audio
           className="preview-audio"
           controls
@@ -160,6 +160,10 @@ function CreativePreview({
         >
           Your browser does not support the audio element.
         </audio>
+      ) : (
+        <p className="export-note">
+          Audio preview is not available for this song. You can still open it on Spotify.
+        </p>
       )}
       <p className="export-note">
         Audio plays in the web preview. Exported image contains visual elements only.
