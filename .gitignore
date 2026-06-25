@@ -29,7 +29,7 @@ backend/__pycache__/
 backend/*.pyc
 
 # Data & Large Files
-backend/data/
+# backend/data/
 *.bin
 *.pt
 
