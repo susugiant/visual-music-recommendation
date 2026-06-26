@@ -10,10 +10,10 @@ function UploadBox({
       <div className="upload-content">
         <p className="eyebrow">Step 1</p>
         <h2>Upload your visual</h2>
-        <p className="subtitle">
+        {/* <p className="subtitle">
           Choose an image and let the AI model analyze visual mood, color, and
           atmosphere before matching it with music.
-        </p>
+        </p> */}
 
         <div className="upload-actions">
           <label className="file-label">

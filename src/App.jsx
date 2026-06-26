@@ -122,14 +122,14 @@ function App() {
     <main className="app">
       <header className="app-header">
         <div>
-          <p className="eyebrow">Visual Music Recommendation</p>
-          <h1>AI Music Mood Lab</h1>
+          {/* <p className="eyebrow">Visual Music Recommendation</p> */}
+          <h1>Visual Music Recommendation</h1>
         </div>
 
-        <p>
+        {/* <p>
           Analyze image mood with AI, inspect confidence scores, then match the
           visual vibe with tracks from the music dataset.
-        </p>
+        </p> */}
       </header>
 
       <UploadBox
