@@ -1,11 +1,14 @@
 import os
 import pandas as pd
-# 🔑 Connected directly to your exact function name
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix, classification_report
 from vibe_engine import predict_image_vibe
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 CSV_PATH = os.path.join(DATA_DIR, "ground_truth.csv")
+MATRIX_OUTPUT_PATH = os.path.join(DATA_DIR, "confusion_matrix.png")
 
 def find_image_path(folder_val, number_val):
     """
@@ -33,6 +36,10 @@ def main():
     correct_predictions = 0
     skipped_ties = 0
 
+    # 📊 1. Initialize arrays to track actual labels vs AI guesses
+    y_true = []
+    y_pred = []
+
     print("🤖 STARTING CUSTOM DATASET ACCURACY TEST...")
     print("---------------------------------------------------------")
 
@@ -41,12 +48,12 @@ def main():
         number_col = row['Number']
         final_vibe = str(row['Final']).strip()
 
-        # 1. Skip the voting ties flagged by your dataset squad
+        # Skip the voting ties flagged by your dataset squad
         if final_vibe == "DISCARD_TIE" or pd.isna(row['Final']):
             skipped_ties += 1
             continue
 
-        # 2. Find the image file path string directly
+        # Find the image file path string directly
         image_path = find_image_path(folder_col, number_col)
 
         if not image_path:
@@ -56,7 +63,7 @@ def main():
         try:
             total_evaluated += 1
 
-            # 🌟 FIXED: Pass the image_path string directly to your engine
+            # Pass the image_path string directly to your engine
             # and unpack its true tuple return format cleanly
             _, vibe_scores = predict_image_vibe(image_path)
 
@@ -68,7 +75,11 @@ def main():
             ai_prediction = max(vibe_scores, key=vibe_scores.get).lower().strip()
             clean_human_vibe = final_vibe.lower().strip()
 
-            # 3. Compare the AI's top guess against the 'Final' consensus label
+            # 📊 2. Store coordinates for the matrix mapping
+            y_true.append(clean_human_vibe)
+            y_pred.append(ai_prediction)
+
+            # Compare the AI's top guess against the 'Final' consensus label
             if ai_prediction == clean_human_vibe:
                 correct_predictions += 1
                 print(f"✅ Folder: {folder_col} | Img: {number_col} -> AI Matched Human ({ai_prediction})")
@@ -79,7 +90,7 @@ def main():
             print(f"💥 Error evaluating image row {index}: {str(e)}")
             total_evaluated -= 1
 
-    # 4. Compile the metric summary for your presentation slides
+    # Compile the metric summary for your presentation slides
     print("\n---------------------------------------------------------")
     print("📊 LIVE ACCURACY TESTING REPORT COMPLETE!")
     print(f"➖ Total Discarded Ties (Skipped): {skipped_ties}")
@@ -89,6 +100,44 @@ def main():
         print(f"🎯 Clean Images Evaluated: {total_evaluated}")
         print(f"✨ Correct AI Classifications: {correct_predictions}")
         print(f"🏆 FINAL PRESENTATION GRADE ACCURACY: {final_accuracy:.2f}%")
+
+        # 📊 3. AUTOMATED VISUAL HEATMAP CONFIGURATION
+        print("\n🎨 Generating professional confusion matrix heatmap...")
+
+        # Pull clean categorical string elements dynamically
+        labels = sorted(list(set(y_true + y_pred)))
+
+        # Execute mathematical grid positioning
+        cm = confusion_matrix(y_true, y_pred, labels=labels)
+
+        # Render the canvas framework
+        plt.figure(figsize=(10, 8))
+        sns.set_theme(style="darkgrid")
+
+        sns.heatmap(
+            cm,
+            annot=True,
+            fmt='d',
+            cmap='Blues',
+            xticklabels=labels,
+            yticklabels=labels,
+            cbar=True,
+            square=True
+        )
+
+        # Customize aesthetic typography axes
+        plt.title('CLIP Model Aesthetic Confusion Matrix Across 7 Core Vibes', fontsize=14, pad=15)
+        plt.ylabel('Actual Human Consensus Label', fontsize=12)
+        plt.xlabel('AI Predicted Label Guess', fontsize=12)
+        plt.xticks(rotation=45, ha='right')
+        plt.yticks(rotation=0)
+        plt.tight_layout()
+
+        # Save output image
+        plt.savefig(MATRIX_OUTPUT_PATH, dpi=300)
+        plt.close()
+        print(f"💾 Success! Confusion matrix chart graphic saved to: {MATRIX_OUTPUT_PATH}")
+
     else:
         print("❌ No valid image files were successfully evaluated. Check directory connections.")
 
