@@ -1,16 +1,77 @@
-# React + Vite
+# **Visual Content-Based Music Recommendation**
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Team members
 
-## React Compiler
+|Name (Student ID)|Role|
+|--|--|
+|**Mai Huynh Minh Thu** (104240759)|Main Researcher/AI model|
+|**Nguyen Hoang Gia An** (104240384)|Frontend|
+|**Nguyen Ngoc Minh Vy** (104240475)|Frontend|
+|**Nguyen Bao Tran** (104240291)|Data + Evaluation|
+|**Tran Gia Linh** (104240762)|Data + Evaluation|
+|**Ha Ngoc Bao Tram** (104240468)|Data + Evaluation|
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Project structure
+
+```text
+├── backend/                        # FastAPI Backend
+│   ├── app.py                      # API server and Margin-Gap logic
+│   ├── vibe_engine.py              # CLIP model inference
+│   ├── recommender.py              # Song database lookup
+│   ├── aggregate_labels.py         # Merges human labels using majority vote
+│   ├── evaluate_final_dataset.py   # Test script to get accuracy and confusion matrix
+│   ├── build_dataset.py            # Queries Spotify API search to build local song pool
+│   ├── analyze_distribution.py     # Generates dataset distribution bar charts
+│   ├── requirements.txt            # Python packages
+│   └── data/                       # Dataset folder
+│       ├── manual_labels.csv       # Raw votes from Vy, Trâm, Linh
+│       ├── ground_truth.csv        # Final clean labels
+│       ├── confusion_matrix.png    # Output heatmap chart
+│       ├── spotify_songs.csv       # Spotify songs data
+│       └── [vibe_folders]/         # 1,241 test images across 7 categories
+│
+├── src/                            # React Frontend
+│   ├── components/
+│   ├── services/
+│   │   └── recommendationApi.js # Calls backend + handles iTunes backup audio
+│   └── package.json
+
+```
+
+# **1. Backend setup**
+
+```
+cd backend
+python -m venv venv
+
+# Activate venv (Windows)
+venv\Scripts\activate
+# Activate venv (Mac/Linux)
+source venv/bin/activate
+
+pip install fastapi uvicorn torch transformers pillow pandas scikit-learn seaborn matplotlib
+```
+
+Start the backend server
+```
+uvicorn app:app --reload
+```
+
+# **2. Frontend setup**
+
+```
+cd frontend
+npm install
+npm run dev
+```
+
+Run evaluation
+```
+cd backend
+python evaluate_final_dataset.py
+```
