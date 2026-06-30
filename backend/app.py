@@ -4,7 +4,6 @@ import random
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-# Import the core logic you built in the previous steps
 from vibe_engine import predict_image_vibe
 from recommender import get_song_recommendations
 
@@ -59,7 +58,7 @@ async def recommend_music_from_image(file: UploadFile = File(...)):
         if not winning_vibe or not confidence_scores:
             raise HTTPException(status_code=500, detail="AI engine failed to analyze the image.")
 
-        # 4. 🧠 MULTI-VIBE LOGIC: Sort categories from highest to lowest score
+        # 4. Sort categories from highest to lowest score
         sorted_vibes = sorted(confidence_scores.items(), key=lambda item: item[1], reverse=True)
 
         primary_vibe, primary_score = sorted_vibes[0]

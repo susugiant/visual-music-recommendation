@@ -8,9 +8,6 @@ INPUT_CSV = os.path.join(DATA_DIR, "manual_labels.csv")
 OUTPUT_CSV = os.path.join(DATA_DIR, "ground_truth.csv")
 
 def calculate_majority(row):
-    """
-    Gathers the 3 votes exactly based on your columns: Vy, Tram, and Linh.
-    """
     votes = [
         str(row['Vy']).strip().lower(),
         str(row['Tram']).strip().lower(),

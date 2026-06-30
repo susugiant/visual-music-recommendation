@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SONGS_CSV = os.path.join(BASE_DIR, "data", "spotify_songs.csv")
-IMAGES_CSV = os.path.join(BASE_DIR, "data", "ground_truth.csv") # Generated from your Google Sheet
+IMAGES_CSV = os.path.join(BASE_DIR, "data", "ground_truth.csv")
 
 def analyze_dataset(file_path, title, label_column):
     if not os.path.exists(file_path):
@@ -18,7 +18,6 @@ def analyze_dataset(file_path, title, label_column):
     counts = df[label_column].value_counts()
     print(counts)
 
-    # Generate and save a clean bar chart for your report slides
     plt.figure(figsize=(8, 4))
     counts.plot(kind='bar', color=['#1DB954', '#191414', '#4a4e69', '#9a8c98', '#c9ada7'])
     plt.title(f"Distribution of Categories in {title}")
